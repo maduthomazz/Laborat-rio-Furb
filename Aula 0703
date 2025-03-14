@@ -1,0 +1,66 @@
+# AULA 07/03
+
+# TIRAR NOTAÇÃO CIENTÍFICA ####
+options(scipen = 999)
+
+# EXCLUIR UMA BASE DE DADOS
+nomedoobjeto <- NULL
+
+## ATALHOS DE TECLADO ####
+# "<-": "ALT" + "-"
+# PARA EXECUTAR A LINHA: "ALT" + "ENTER"
+# PARA EXECUTAR TODO SCRIPT: "ALT" + "SHIFT" + "ENTER"
+
+## BIBLIOTECA PARA ACESSAR DADOS DO BANCO MUNDIAL ####
+
+# install.packages('WDI') # PRIMEIRO A EXECUTAR
+library(WDI) # CARREGAR O PACOTE
+
+## VARIÁVEIS ####
+
+# TAXA DE DESEMPREGO (%): SL.UEM.TOTL.ZS
+# TAXA DE ALFABETIZAÇÃO DE ADULTOS (%): SE.ADT.LITR.ZS
+
+# Infos: http://vincentarelbundock.github.io/WDI/
+
+taxa_desemprego <- WDIsearch('Unemployment rate') # Taxa de desemprego
+alfabetizacao_adultos <- WDIsearch('Adult literacy rate') # Taxa de alfabetização de adultos
+
+variaveis <- c('SL.UEM.TOTL.ZS',  # Taxa de desemprego
+               'SE.ADT.LITR.ZS')  # Taxa de alfabetização de adultos
+
+# BASE DE DADOS DE CORTE TRANSVERSAL
+
+dadosall <- WDI(indicator = variaveis,
+                country = 'all',
+                start = 2022, end = 2022) # PROBLEMAS NA NA
+
+dadosBR <- WDI(indicator = variaveis,
+               country = 'BR') # PROBLEMA DE NA
+
+install.packages("tidyverse")
+library(tidyverse)
+dadosallOK <- WDI(indicator = variaveis,
+                  country = 'all',
+                  start = 2022, end = 2022) %>% 
+  na.omit()
+
+dadosBROK <- WDI(indicator = variaveis,
+                 country = 'BR') %>% 
+  na.omit()
+
+# GRÁFICO MELHORADO
+
+grafico_linha_brOK <- 
+  ggplot(data = dadosBROK,
+         mapping = aes(x = year, y = SL.UEM.TOTL.ZS)) +  # Nome correto da variável de taxa de desemprego
+  geom_line(color = "blue") +  # Adicionando cor para a linha
+  labs(
+    title = "Variação da Taxa de Desemprego no Brasil até 2022",  # Título do gráfico
+    x = "Ano",  # Rótulo do eixo X
+    y = "Taxa de Desemprego (%)"  # Rótulo do eixo Y
+  ) +
+  theme_minimal()  # Aplicando um tema minimalista
+
+# Imprimir o gráfico
+print(grafico_linha_brOK)
