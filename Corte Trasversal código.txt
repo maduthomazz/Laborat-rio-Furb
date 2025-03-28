@@ -1,0 +1,29 @@
+install.packages("WDI")
+install.packages("ggplot2")
+install.packages("dplyr")
+
+library(WDI)
+library(ggplot2)
+library(dplyr)
+
+# Definir os países da América Latina
+paises_latam <- c("ARG", "BRA", "CHL", "COL", "ECU", "MEX", "PER", "URY", "BOL", 
+"PRY", "VEN", "CRI", "PAN", "DOM", "GTM", "HND", "NIC", "SLV")
+
+# Baixar os dados do Banco Mundial para o ano de 2022
+dados <- WDI(country = paises_latam, 
+             indicator = c("PIB_per_capita" = "NY.GDP.PCAP.CD", 
+                           "Taxa_desemprego" = "SL.UEM.TOTL.ZS"), 
+             start = 2022, end = 2022)
+
+# Remover valores ausentes
+dados <- na.omit(dados)
+
+# Criar o gráfico de dispersão
+ggplot(dados, aes(x = PIB_per_capita, y = Taxa_desemprego, label = country)) +
+  geom_point(color = "blue", size = 3) +
+  geom_text(vjust = -0.5, size = 4) +  # Adicionar nomes dos países
+  labs(title = "Relação entre PIB per capita e Taxa de Desemprego (2022)",
+       x = "PIB per capita (US$)",
+       y = "Taxa de Desemprego (%)") +
+  theme_minimal()

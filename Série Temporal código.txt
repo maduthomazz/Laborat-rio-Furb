@@ -1,0 +1,47 @@
+install.packages("WDI")       # Para buscar dados do Banco Mundial
+install.packages("ggplot2")   # Para visualização dos dados
+install.packages("dplyr")     # Para manipulação de dados
+install.packages("tidyr")     # Para transformar os dados
+install.packages("scales")    # Para formatar os eixos
+
+library(WDI)
+library(ggplot2)
+library(dplyr)
+library(tidyr)
+library(scales)
+
+# Baixar os dados do Banco Mundial para o Brasil (código do país: "BRA")
+dados <- WDI(country = "BRA",
+             indicator = c("inflacao" = "FP.CPI.TOTL.ZG",
+                           "taxa_juros" = "FR.INR.LEND"),
+             start = 2000, end = 2023) 
+
+# Verificar as primeiras linhas
+head(dados)
+
+# Baixar os dados do Banco Mundial para o Brasil (código do país: "BRA")
+dados <- WDI(country = "BRA",
+             indicator = c("inflacao" = "FP.CPI.TOTL.ZG",
+                           "taxa_juros" = "FR.INR.LEND"),
+             start = 2000, end = 2023) 
+
+# Verificar as primeiras linhas
+head(dados)
+
+# Selecionar e organizar os dados
+dados_long <- dados %>%
+  select(year, inflacao, taxa_juros) %>%   # Seleciona as colunas relevantes
+  pivot_longer(cols = c(inflacao, taxa_juros), names_to = "Variável", values_to = "Valor") %>%
+  arrange(year)  # Ordena por ano
+
+ggplot(dados_long, aes(x = year, y = Valor, color = Variável)) +
+  geom_line(size = 1) +
+  labs(title = "Evolução da Inflação e Taxa de Juros no Brasil",
+       x = "Ano",
+       y = "Percentual (%)",
+       color = "Indicador") +
+  scale_color_manual(values = c("blue", "red"),
+                     labels = c("Inflação (%)", "Taxa de Juros (%)")) +
+  scale_y_continuous(labels = percent_format(scale = 1)) +
+  theme_minimal() +
+  theme(legend.position = "bottom")
