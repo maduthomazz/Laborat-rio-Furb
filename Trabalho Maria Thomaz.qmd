@@ -1,0 +1,148 @@
+---
+title: "Maria Eduarda Thomaz"
+format: html
+editor: visual
+---
+
+```{r}
+#| label: load-packages
+#| include: false
+
+library(tidyverse)
+library(WDI)
+library(scales)
+```
+
+```{r}
+#| label: load-data
+#| include: false
+
+# CÓDIGO DE CARREGAMENTO DOS DADOS
+
+### SÉRIE TEMPORAL
+# Baixar os dados do Banco Mundial para o Brasil (2000-2023)
+dados <- WDI(country = "BRA",
+             indicator = c("inflação" = "FP.CPI.TOTL.ZG",
+                           "taxa_juros" = "FR.INR.LEND"),
+             start = 2000, end = 2023) 
+
+# Transformação dos dados para formato longo
+dados_long <- dados %>%
+  select(year, inflação, `taxa_juros`) %>%   
+  pivot_longer(cols = c(inflação, `taxa_juros`), names_to = "Variável", values_to = "Valor") %>%
+  arrange(year) %>%
+  mutate(Variável = factor(Variável, levels = c("inflação", "taxa_juros")))  # Definir ordem dos fatores
+
+# Identificar os valores máximos e mínimos de cada variável
+dados_max_min <- dados_long %>%
+  group_by(Variável) %>%
+  filter(Valor == max(Valor) | Valor == min(Valor)) %>%
+  mutate(posicao_vjust = ifelse(Valor == max(Valor), -1, 1.5)) # Define posição do rótulo
+
+### CORTE TRANSVERSAL
+# Definir os países da América Latina
+paises_latam <- c("ARG", "BRA", "CHL", "COL", "ECU", "MEX", "PER", "URY", "BOL", 
+                  "PRY", "VEN", "CRI", "PAN", "DOM", "GTM", "HND", "NIC", "SLV")
+
+# Baixar os dados do Banco Mundial para o ano de 2022
+dados1 <- WDI(country = paises_latam, 
+             indicator = c("PIB_per_capita" = "NY.GDP.PCAP.CD", 
+                           "Taxa_desemprego" = "SL.UEM.TOTL.ZS"), 
+             start = 2019, end = 2019)
+
+# Remover valores ausentes
+dadosok <- na.omit(dados1)
+
+```
+
+## Gráfico Série Temporal
+
+O gráfico de série temporal apresentado exibe a evolução da inflação e da taxa de juros no Brasil entre os anos de 2000 e 2023. A partir deste gráfico, podemos observar as tendências dessas duas variáveis econômicas ao longo do tempo, com destaque para as flutuações que ocorreram em diferentes períodos. A inflação, representada pela linha azul no gráfico, indica a variação anual dos preços no Brasil. A série mostra que, após um período de inflação elevada nas décadas de 1980 e 1990, o Brasil experimentou uma queda significativa nas taxas de inflação a partir do início dos anos 2000, com alguns picos temporários. A partir de 2010, a inflação passou a flutuar em torno de valores moderados, com uma leve tendência de aumento nos últimos anos, especialmente em 2020, quando o país enfrentou os efeitos econômicos da pandemia de COVID-19, levando a um aumento considerável nos preços de consumo.
+
+A taxa de juros, representada pela linha vermelha no gráfico, reflete o custo do crédito e o nível de atividade econômica no país. A taxa de juros no Brasil tem historicamente sido alta, como mostrado pelo gráfico. Durante os anos 2000, o Banco Central adotou uma política de juros elevados para controlar a inflação. No entanto, houve uma redução gradual nas taxas de juros a partir de 2016, especialmente após a implementação de reformas econômicas e a busca por uma política monetária mais equilibrada. Ainda assim, a taxa de juros permanece acima da média global, refletindo as características da economia brasileira e a necessidade de controle da inflação.
+
+Observamos que a inflação e a taxa de juros têm uma relação dinâmica: durante períodos de alta inflação, o Banco Central tende a aumentar a taxa de juros para conter a pressão inflacionária. Essa política de "juros altos" visa desestimular o consumo e os investimentos excessivos, ajudando a controlar a demanda e, assim, a reduzir a inflação. No entanto, é possível notar que em alguns anos, apesar da redução dos juros, a inflação continuou a apresentar certa volatilidade, evidenciando que o controle da inflação no Brasil envolve uma série de fatores econômicos, internos e externos.
+
+Os dados utilizados neste gráfico foram obtidos do Banco Mundial e incluem as taxas anuais de inflação (FP.CPI.TOTL.ZG) e taxa de juros (FR.INR.LEND) entre os anos de 2000 e 2023. Esses indicadores são cruciais para a análise da política monetária e da estabilidade econômica do país. A inflação reflete a pressão sobre o poder de compra da população, enquanto a taxa de juros influencia diretamente o custo do crédito e o comportamento do consumo e investimento.
+
+O comportamento das taxas de juros e da inflação tem implicações significativas para a economia brasileira. Taxas de juros elevadas, embora úteis para controlar a inflação, podem dificultar o acesso ao crédito e inibir o crescimento econômico. Por outro lado, uma inflação elevada reduz o poder de compra da população e afeta negativamente o nível de confiança na economia. A política monetária do Brasil, portanto, tem que ser cuidadosamente calibrada para equilibrar esses dois fatores, garantindo estabilidade econômica sem prejudicar o crescimento sustentável.
+
+Este gráfico fornece uma visão clara de como a inflação e a taxa de juros se comportaram no Brasil entre 2000 e 2023. Ele ilustra a complexidade das políticas monetárias e os desafios enfrentados pelo país para manter a estabilidade econômica. A análise dessas duas variáveis é fundamental para entender o cenário macroeconômico do Brasil e como ele impacta a vida cotidiana dos cidadãos e os investimentos no país.
+
+```{r}
+#| label: graf1
+#| warning: false
+#| echo: false
+
+# Criar o gráfico
+ggplot(dados_long, aes(x = year, y = Valor, color = Variável)) +
+  geom_line(size = 1) +                          # Linha conectando os pontos
+  geom_point(size = 2) +                         # Pontos nos valores individuais
+  geom_text(data = dados_max_min, aes(label = paste0(round(Valor, 2), "%"), vjust = posicao_vjust), 
+            hjust = -0.1, size = 4) +            # Posicionamento dinâmico dos rótulos
+  labs(
+    title = "Evolução da Inflação e Taxa de Juros no Brasil (2000-2023)",
+    x = "Ano",
+    y = "Percentual (%)",
+    color = "Indicador",
+    caption = "Fonte: Banco Mundial"   # Adicionando a fonte abaixo do gráfico
+  ) +
+  scale_color_manual(values = c("blue", "red"),
+                     labels = c("inflação (%)", "taxa_juros (%)")) +  # Corrigindo os nomes na legenda
+  scale_y_continuous(labels = percent_format(scale = 1)) +  # Formatação percentual
+  scale_x_continuous(breaks = seq(2000, 2023, 2), expand = expansion(mult = c(0.05, 0.1))) +  
+  theme_minimal() +
+  theme(
+    legend.position = "bottom",                # Legenda na parte inferior
+    legend.text = element_text(size = 11),     # Tamanho uniforme para a legenda
+    axis.title = element_text(size = 12),      # Tamanho uniforme para os títulos dos eixos
+    axis.text = element_text(size = 11),       # Tamanho uniforme para os números nos eixos
+    plot.title = element_text(size = 14, face = "bold"),  # Título maior e em negrito
+    axis.text.x = element_text(angle = 0, vjust = 0.5),   # Texto do eixo X na horizontal
+    axis.text.y = element_text(angle = 90, hjust = 0.5),  # Texto do eixo Y na vertical
+    plot.caption = element_text(size = 10, hjust = 0.5)   # Fonte centralizada abaixo do gráfico
+  )
+```
+
+## Gráfico Corte Transversal
+
+O gráfico de dispersão apresentado ilustra a relação entre o PIB per capita e a taxa de desemprego para os países da América Latina em 2022. Cada ponto no gráfico representa um país da região, com o PIB per capita no eixo horizontal (X) e a taxa de desemprego no eixo vertical (Y). Os nomes dos países são exibidos ao lado dos respectivos pontos, permitindo a identificação fácil de cada nação no gráfico.
+
+Ao analisar o gráfico, é possível observar que há uma grande variação nos valores do PIB per capita entre os países da América Latina, com algumas nações apresentando valores mais elevados, como o Chile e o Uruguai, enquanto outras, como a Venezuela e o Bolívia, exibem valores mais baixos. Esse comportamento reflete desigualdades econômicas significativas entre as nações da região, que têm diferentes níveis de desenvolvimento e recursos.
+
+Em relação à taxa de desemprego, também existe uma disparidade entre os países. Países como o Brasil e o México apresentam taxas de desemprego mais elevadas em comparação com nações como o Chile e o Uruguai, que, apesar de um PIB per capita maior, apresentam taxas de desemprego relativamente mais baixas. Isso sugere que, embora um maior PIB per capita geralmente esteja relacionado com uma economia mais estável e um mercado de trabalho mais forte, outros fatores, como políticas econômicas, estrutura do mercado de trabalho e contexto socioeconômico, também desempenham papéis importantes na determinação da taxa de desemprego.
+
+O gráfico mostra que não há uma correlação clara entre o PIB per capita e a taxa de desemprego na América Latina em 2022, ou seja, um maior PIB per capita não necessariamente implica uma menor taxa de desemprego. Isso pode indicar que, apesar de alguns países apresentarem um PIB per capita mais elevado, eles ainda enfrentam desafios significativos no que diz respeito à criação de empregos sustentáveis e à redução da desigualdade no mercado de trabalho.
+
+Esse comportamento é uma característica comum em economias em desenvolvimento, onde, além de fatores macroeconômicos, questões como a qualidade dos empregos, informalidade no mercado de trabalho e políticas de inclusão social também impactam o nível de desemprego. Portanto, a análise dos dados demonstra que é necessário considerar uma série de fatores econômicos e sociais ao avaliar a relação entre o crescimento econômico e o desemprego na América Latina.
+
+Os dados utilizados neste gráfico foram obtidos do Banco Mundial, que fornece informações sobre o PIB per capita (indicador "NY.GDP.PCAP.CD") e a taxa de desemprego (indicador "SL.UEM.TOTL.ZS") para os países da América Latina em 2022. Esses indicadores são essenciais para compreender a dinâmica econômica da região e as condições do mercado de trabalho.
+
+Em resumo, o gráfico mostra como a América Latina enfrenta desafios econômicos complexos. Embora o crescimento do PIB per capita seja um indicador importante de prosperidade, ele não é suficiente para garantir uma redução significativa na taxa de desemprego. Isso reforça a necessidade de políticas econômicas mais abrangentes e inclusivas que incentivem tanto o crescimento econômico quanto a criação de empregos, garantindo uma distribuição mais equitativa dos benefícios do desenvolvimento econômico.
+
+```{r}
+#| label: graf2
+#| warning: false
+#| echo: false
+
+
+ggplot(dadosok, aes(x = PIB_per_capita, y = Taxa_desemprego, label = country)) +
+  geom_point(color = "blue", size = 3) +
+  geom_text(vjust = -0.5, size = 4, check_overlap = TRUE) +  # Adicionar nomes dos países com checagem de sobreposição
+  labs(title = "PIB e Taxa de Desemprego na América Latina (2019)",
+       x = "PIB per capita (US$)",
+       y = "Taxa de Desemprego (%)",
+       caption = "Fonte: Banco Mundial") +  # Adicionar fonte abaixo
+  theme_minimal() +
+  theme(
+    axis.title = element_text(size = 12),       # Tamanho dos títulos dos eixos
+    axis.text = element_text(size = 11),        # Tamanho dos números nos eixos
+    plot.title = element_text(size = 14, face = "bold"),  # Título em negrito
+    axis.text.x = element_text(angle = 0, vjust = 0.5),    # Texto do eixo X na horizontal
+    axis.text.y = element_text(angle = 90, hjust = 0.5),   # Texto do eixo Y na vertical
+    plot.caption = element_text(size = 10, hjust = 0.5),   # Fonte centralizada abaixo do gráfico
+    plot.margin = margin(10, 10, 10, 20)  # Aumentar margem para o eixo X
+  )
+
+
+```
