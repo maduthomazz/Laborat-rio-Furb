@@ -1,0 +1,80 @@
+---
+title: "Maria Eduarda Thomaz - Trabalho 2"
+format: html
+editor: visual
+---
+
+```{r}
+#| label: load-packages
+#| include: false
+
+library(tidyverse)
+library(GetBCBData)
+library(gganimate)
+library(gifski)
+```
+
+```{r}
+#| label: load-data
+#| include: false
+
+my.id <- c(pibpercap = 21775)
+
+df.bcb <- gbcbd_get_series(id = my.id ,
+                           first.date = '1996-12-31',
+                           last.date = Sys.Date(),
+                           format.data = 'long',
+                           use.memoise = TRUE, 
+                           cache.path = tempdir(), # use tempdir for cache folder
+                           do.parallel = FALSE)
+
+glimpse(df.bcb)
+
+```
+
+## Produto Interno Bruto Per Capita Em R\$ Correntes
+
+O Produto Interno Bruto (PIB) per capita em R\$ correntes, segundo o Banco Central do Brasil (BCB) e o Sistema Gerenciador de Séries Temporais (SGS), representa o valor total de bens e serviços finais produzidos no país em determinado ano, dividido pela população residente, expresso em reais nominais (sem correção pela inflação). Essa métrica permite avaliar, de forma simplificada, a média de riqueza gerada por habitante, sendo útil para comparações ao longo do tempo ou entre regiões. A série extraída do SGS do BCB utiliza dados agregados do IBGE, atualizados anualmente, e é frequentemente utilizada para análises econômicas e políticas públicas.
+
+Abaixo, temos o gráfico da evolução do PIB per capita do Brasil, em valores correntes, desde meados da década de 1990 até o ano de 2023, com projeção para 2024. O gráfico mostra claramente uma tendência de crescimento contínuo ao longo do tempo, ainda que com variações de ritmo em diferentes períodos. Esse indicador reflete a média de produção de riqueza por habitante, considerando os valores nominais de cada ano. Observa-se que, apesar de momentos de crise econômica e instabilidade política, como nos anos de 2015 a 2016 e durante a pandemia em 2020, o PIB per capita manteve sua trajetória de alta, principalmente impulsionado pela inflação, recuperação econômica e mudanças na estrutura produtiva do país.
+
+```{r}
+#| label: graf1
+#| warning: false
+#| echo: false
+
+format_reais <- function(x) {
+  paste0("R$ ", format(x, big.mark = ".", decimal.mark = ",", scientific = FALSE))
+}
+
+pib <- ggplot(df.bcb, aes(x = ref.date, y = value)) +
+  geom_line(color = "blue") +
+  geom_point(color = "darkred", size = 2) +
+  scale_y_continuous(
+    breaks = seq(0, max(df.bcb$value, na.rm = TRUE), by = 5000),
+    labels = format_reais
+  ) +
+  scale_x_date(
+    date_breaks = "4 years",
+    date_labels = "%Y"
+  ) +
+  labs(
+    title = "PIB per capita ao longo dos anos no Brasil",
+    subtitle = "Ano: {frame_along}",  # mostra o ano atual na animação
+    x = "Ano",
+    y = "PIB per capita (R$)",
+    caption = "Fonte: Banco Central do Brasil"
+  ) +
+  theme_minimal() +
+  transition_reveal(ref.date)
+
+pib
+```
+
+Ao analisarmos o gráfico, observamos um crescimento expressivo e relativamente contínuo da renda média por habitante, partindo de cerca de R\$ 6 mil em meados dos anos 1990 para mais de R\$ 55 mil em 2024. Esse comportamento reflete tanto o crescimento econômico do país quanto o efeito da inflação acumulada sobre os valores nominais.
+
+Durante os anos 1990, o crescimento do PIB per capita foi moderado, reflexo de um período de instabilidade econômica, hiperinflação no início da década e da implantação do Plano Real (1994), que estabilizou a moeda e possibilitou um ambiente mais favorável ao crescimento. Já nos anos 2000, especialmente entre 2003 e 2010, o Brasil viveu um ciclo de expansão econômica sustentada por políticas de estímulo ao consumo interno, crescimento das exportações (sobretudo de commodities) e aumento do crédito. Esses fatores impulsionaram o aumento do PIB per capita, como demonstrado pela inclinação mais acentuada da curva nesse período.
+
+Entre 2015 e 2019, o gráfico evidencia um crescimento mais lento, associado à crise econômica iniciada em 2014, marcada por recessão, queda da atividade industrial, crise política e fiscal. A partir de 2020, observa-se uma forte aceleração no PIB per capita em valores correntes, que pode ser explicada por diversos fatores: a recomposição do nível de atividade após a crise provocada pela pandemia da COVID-19, políticas de estímulo fiscal, e, principalmente, os efeitos da inflação elevada, que aumentam os valores nominais do PIB (embora não necessariamente reflitam aumento real de bem-estar).
+
+Em resumo, o PIB per capita em R\$ correntes é uma medida importante para análises macroeconômicas, embora deva ser interpretado com cautela, pois não considera desigualdade de renda nem os efeitos da inflação sobre o poder de compra. Sua evolução reflete os principais ciclos econômicos do país e pode ser melhor compreendida quando analisada junto a outras variáveis, como inflação, desemprego, taxa de câmbio e crescimento real do PIB.
